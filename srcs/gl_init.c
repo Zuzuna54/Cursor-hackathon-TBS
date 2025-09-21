@@ -56,11 +56,12 @@ t_gl						*init_gl_struct(void)
 	gl->camera_rotation_x = 0.0f;
 	gl->camera_rotation_y = 0.0f;
 	
-	// Initialize enhanced rendering
-	gl->enhanced_vertices = NULL;
-	gl->enhanced_vbo = 0;
-	gl->enhanced_program = 0;
-	gl->use_enhanced_rendering = 0;
+	// Initialize enhanced colored rendering
+	gl->enhanced_vertex_shader = 0;
+	gl->enhanced_fragment_shader = 0;
+	gl->enhanced_shader_program = 0;
+	gl->vertex_normals = NULL;
+	gl->normal_buffer = 0;
 	
 	return gl;
 }

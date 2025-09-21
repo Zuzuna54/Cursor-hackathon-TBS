@@ -16,13 +16,6 @@ typedef struct 				s_matrix
 	GLuint 					view;
 }							t_matrix;
 
-typedef struct 				s_vertex_enhanced
-{
-	float3					position;	// Vertex position (x, y, z)
-	float3					normal;		// Surface normal (x, y, z)
-	float3					color;		// Vertex color (r, g, b)
-}							t_vertex_enhanced;
-
 typedef struct 				s_gl
 {
 	GLFWwindow 				*window;
@@ -54,12 +47,12 @@ typedef struct 				s_gl
 	float					camera_rotation_x;	// Camera rotation around X axis
 	float					camera_rotation_y;	// Camera rotation around Y axis
 	
-	// Enhanced rendering support
-	t_vertex_enhanced		*enhanced_vertices;	// Enhanced vertex buffer with normals/colors
-	GLuint					enhanced_vbo;		// Enhanced VBO handle
-	GLuint					enhanced_program;	// Enhanced shader program
-	GLint					enhanced_uniforms[10]; // Enhanced shader uniform locations
-	int						use_enhanced_rendering; // Flag to enable enhanced rendering
+	// Enhanced colored rendering support
+	GLuint					enhanced_vertex_shader;		// Enhanced vertex shader for colored mode
+	GLuint					enhanced_fragment_shader;	// Enhanced fragment shader for colored mode
+	GLuint					enhanced_shader_program;	// Enhanced shader program for colored mode
+	float					*vertex_normals;			// Array of vertex normals
+	GLuint					normal_buffer;				// VBO for normals
 }							t_gl;
 
 typedef struct 				s_julia

@@ -107,9 +107,6 @@ void						gl_render_enhanced(t_data *data)
 	float					delta;
 	float 					old_time;
 
-	// Initialize enhanced rendering system
-	init_enhanced_rendering(gl);
-	
 	// Initialize timing for smooth rotation
 	old_time = (float)glfwGetTime();
 	
@@ -148,23 +145,24 @@ void						gl_render_enhanced(t_data *data)
 			}
 		}
 		
-		// Always update the model matrix uniform (whether rotating or not)
+		// Use basic shaders for all modes with renderMode uniform
+		glUseProgram(gl->shaderProgram);
+		
+		// Update shader uniforms
 		glUniformMatrix4fv(gl->matrix->model, 1, GL_FALSE, (float *)gl->matrix->model_mat);
+		glUniformMatrix4fv(gl->matrix->view, 1, GL_FALSE, (float *)gl->matrix->view_mat);
+		
+		// Get projection uniform location dynamically
+		GLuint projection_loc = glGetUniformLocation(gl->shaderProgram, "proj");
+		glUniformMatrix4fv(projection_loc, 1, GL_FALSE, (float *)gl->matrix->projection_mat);
+		
+		// Set render mode uniform for colored rendering
+		GLuint render_mode_loc = glGetUniformLocation(gl->shaderProgram, "renderMode");
+		glUniform1i(render_mode_loc, gl->render_mode);
 
 		// Render triangles
 		if (gl->num_pts > 0)
-		{
-			if (gl->render_mode == 2 && gl->use_enhanced_rendering)
-			{
-				// Use enhanced rendering for colored mode
-				render_enhanced(data);
-			}
-			else
-			{
-				// Use standard rendering for wireframe and solid modes
-				glDrawArrays(GL_TRIANGLES, 0, gl->num_pts);
-			}
-		}
+			glDrawArrays(GL_TRIANGLES, 0, gl->num_pts);
 
 		glfwSwapBuffers(gl->window);
 		glfwPollEvents();

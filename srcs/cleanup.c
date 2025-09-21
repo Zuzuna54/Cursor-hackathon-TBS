@@ -32,10 +32,6 @@ void						clean_gl(t_gl *gl)
 		free(gl->matrix);
 	if (gl->tris)
 		free(gl->tris);
-	
-	// Clean up enhanced rendering resources
-	cleanup_enhanced_rendering(gl);
-	
 	free(gl);
 }
 

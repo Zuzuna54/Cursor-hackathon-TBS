@@ -1,46 +1,34 @@
 #version 330 core
 
-// Input attributes
-in vec3 pos;       // Vertex position
-in vec3 normal;    // Surface normal
-in vec3 color;     // Vertex color
+// Input vertex attributes
+in vec3                 pos;        // Vertex position
+in vec3                 normal;     // Vertex normal (will be calculated)
 
 // Uniform matrices
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 proj;
-uniform mat3 normalMatrix; // Normal transformation matrix
-
-// Uniforms for lighting
-uniform vec3 lightPos;     // Light position in world space
-uniform vec3 lightColor;   // Light color
-uniform vec3 viewPos;      // Camera position in world space
-uniform int renderMode;    // 0=wireframe, 1=solid, 2=colored
+uniform mat4            model;      // Model transformation matrix
+uniform mat4            view;       // View transformation matrix  
+uniform mat4            proj;       // Projection transformation matrix
+uniform mat3            normalMat;  // Normal transformation matrix
 
 // Output to fragment shader
-out vec3 FragPos;     // Fragment position in world space
-out vec3 Normal;      // Fragment normal in world space
-out vec3 VertexColor; // Vertex color
-out vec3 LightPos;    // Light position
-out vec3 LightColor;  // Light color
-out vec3 ViewPos;     // View position
-flat out int RenderMode; // Render mode (flat = no interpolation)
+out vec3                fragPos;    // World space position
+out vec3                fragNormal; // World space normal
+out float               fragDepth;  // Normalized depth for coloring
 
-void main()
+void                    main()
 {
-    // Transform vertex position to world space
-    FragPos = vec3(model * vec4(pos, 1.0));
+    // Transform vertex position
+    vec4 worldPos = model * vec4(pos, 1.0f);
+    fragPos = worldPos.xyz;
     
-    // Transform normal to world space (handle non-uniform scaling)
-    Normal = normalMatrix * normal;
+    // Transform normal to world space
+    fragNormal = normalize(normalMat * normal);
     
-    // Pass through vertex color and lighting parameters
-    VertexColor = color;
-    LightPos = lightPos;
-    LightColor = lightColor;
-    ViewPos = viewPos;
-    RenderMode = renderMode;
+    // Calculate normalized depth (0.0 = near, 1.0 = far)
+    vec4 viewPos = view * worldPos;
+    fragDepth = (-viewPos.z - 1.0) / 20.0; // Adjust range as needed
+    fragDepth = clamp(fragDepth, 0.0, 1.0);
     
     // Final position transformation
-    gl_Position = proj * view * vec4(FragPos, 1.0);
+    gl_Position = proj * view * model * vec4(pos, 1.0f);
 }

@@ -309,6 +309,10 @@ void 						init_gl(t_gl *gl)
 
 void 						terminate_gl(t_gl *gl)
 {
+	// Clean up enhanced shaders
+	cleanup_enhanced_shaders(gl);
+	
+	// Clean up basic OpenGL resources
 	glDeleteVertexArrays(1, &gl->vao);
 	glDeleteBuffers(1, &gl->vbo);
 	glDeleteProgram(gl->shaderProgram);

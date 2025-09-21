@@ -6,6 +6,9 @@
 # define VERTEX_SRC "./shaders/vertex.shader"
 # define FRAGMENT_SRC "./shaders/fragment.shader"
 
+# define VERTEX_ENHANCED_SHADER_PATH "./shaders/vertex_enhanced.shader"
+# define FRAGMENT_ENHANCED_SHADER_PATH "./shaders/fragment_enhanced.shader"
+
 # define GLEW_STATIC
 # include <GL/glew.h>
 # include <GLFW/glfw3.h>
@@ -45,6 +48,10 @@ char						*readShaderSource(char *src_name);
 GLuint 						createShader(GLenum type, char **src);
 
 void 						createProgram(t_gl *gl);
+
+// Enhanced shader functions
+GLuint						compileShader(const char *shader_path, GLenum shader_type);
+GLuint						createEnhancedProgram(GLuint vertex_shader, GLuint fragment_shader);
 
 void						gl_set_attrib_ptr(t_gl *gl, char *attrib_name, GLint num_vals, int stride, int offset);
 void						gl_retrieve_tris(t_data *data);

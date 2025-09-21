@@ -20,7 +20,7 @@ SRC = 	main.c \
         gl_init.c \
         gl_calculations.c\
         enhanced_rendering.c \
-        enhanced_rendering_colors.c \
+        enhanced_colored_rendering.c \
         mathematical_enhancements.c \
         \
         obj.c \

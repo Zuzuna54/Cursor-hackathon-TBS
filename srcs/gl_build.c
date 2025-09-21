@@ -97,3 +97,66 @@ void 						createProgram(t_gl *gl)
 		glDeleteShader(gl->fragmentShader);
 	glUseProgram(gl->shaderProgram);
 }
+
+/**
+ * @brief Compile a single shader from file path
+ * 
+ * Helper function for enhanced rendering that compiles a shader
+ * from a given file path and returns the shader ID.
+ */
+GLuint						compileShader(const char *shader_path, GLenum shader_type)
+{
+	char					*shader_source;
+	char					**shader_src_ptr;
+	GLuint					shader;
+	
+	// Read shader source from file
+	shader_source = readShaderSource((char *)shader_path);
+	if (!shader_source) {
+		printf("\x1b[31m[%s]\x1b[0m Failed to read shader: %s\n", __FILE__, shader_path);
+		return 0;
+	}
+	
+	shader_src_ptr = &shader_source;
+	
+	// Compile shader
+	shader = createShader(shader_type, shader_src_ptr);
+	
+	// Clean up
+	free(shader_source);
+	
+	return shader;
+}
+
+/**
+ * @brief Create a shader program from two compiled shaders
+ * 
+ * Links vertex and fragment shaders into a complete shader program.
+ */
+GLuint						createEnhancedProgram(GLuint vertex_shader, GLuint fragment_shader)
+{
+	char 					buffer[512];
+	GLint 					status;
+	GLuint					program;
+
+	bzero(buffer, 512);
+	program = glCreateProgram();
+	
+	if (vertex_shader)
+		glAttachShader(program, vertex_shader);
+	if (fragment_shader)
+		glAttachShader(program, fragment_shader);
+		
+	glLinkProgram(program);
+	glGetProgramiv(program, GL_LINK_STATUS, &status);
+	
+	if (status != GL_TRUE)
+	{
+		glGetProgramInfoLog(program, 512, NULL, buffer);
+		printf("\x1b[31m[%s]\x1b[0m Enhanced shader program link failed:\n%s\n", __FILE__, buffer);
+		glDeleteProgram(program);
+		return 0;
+	}
+	
+	return program;
+}

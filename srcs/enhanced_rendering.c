@@ -13,22 +13,26 @@ void						handle_render_mode_change(t_gl *gl)
 		case 0: // Wireframe mode
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			glLineWidth(1.0f);
+			glUseProgram(gl->shaderProgram); // Use basic shaders
 			break;
 			
 		case 1: // Solid mode  
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			glEnable(GL_DEPTH_TEST);
+			glUseProgram(gl->shaderProgram); // Use basic shaders
 			break;
 			
-	case 2: // Colored mode with enhanced shading
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glEnable(GL_DEPTH_TEST);
-		// Enhanced rendering with lighting and colors is handled in render loop
-		break;
+		case 2: // Enhanced colored mode
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			glEnable(GL_DEPTH_TEST);
+			// Enhanced colored mode will use enhanced shaders
+			// Shader switching will be handled in the render loop
+			break;
 			
 		default:
 			gl->render_mode = 0; // Reset to wireframe
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			glUseProgram(gl->shaderProgram);
 			break;
 	}
 }
@@ -183,10 +187,18 @@ void						regenerate_fractal(t_data *data)
 		glBufferData(GL_ARRAY_BUFFER, data->gl->num_pts * sizeof(float), 
 					 (GLfloat *)data->gl->tris, GL_STATIC_DRAW);
 		
-		// Update enhanced vertices for colored rendering
-		if (data->gl->use_enhanced_rendering)
+		// Recalculate vertex normals for enhanced colored rendering
+		calculate_vertex_normals(data);
+		
+		// Update normal buffer if enhanced shaders are available
+		if (data->gl->enhanced_shader_program != 0 && data->gl->vertex_normals != NULL)
 		{
-			update_enhanced_vertices(data);
+			if (data->gl->normal_buffer == 0) {
+				glGenBuffers(1, &data->gl->normal_buffer);
+			}
+			glBindBuffer(GL_ARRAY_BUFFER, data->gl->normal_buffer);
+			glBufferData(GL_ARRAY_BUFFER, data->gl->num_pts * sizeof(float), 
+						 data->gl->vertex_normals, GL_STATIC_DRAW);
 		}
 	}
 	

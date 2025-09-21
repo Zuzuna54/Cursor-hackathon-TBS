@@ -53,6 +53,13 @@ void						handle_render_mode_change(t_gl *gl);
 void						handle_camera_controls(GLFWwindow *window, t_gl *gl);
 void						update_camera_position(t_gl *gl);
 
+// Enhanced colored rendering functions
+void						init_enhanced_shaders(t_gl *gl);
+void						cleanup_enhanced_shaders(t_gl *gl);
+void						calculate_vertex_normals(t_data *data);
+void						setup_enhanced_vertex_attributes(t_gl *gl);
+void						use_enhanced_shaders(t_gl *gl, t_data *data);
+
 // Mathematical enhancements (Task 3.2)
 // Deep zoom and precision
 double						cl_quat_mod_d(cl_quat_d q);
@@ -92,15 +99,5 @@ float3 						**polygonise(float3 *v_pos, float *v_val, uint2 *pos, t_data *data)
 
 void 						export_obj(t_data *data);
 void						write_mesh(t_data *data, int surface, obj *o);
-
-// Enhanced rendering functions
-void						init_enhanced_rendering(t_gl *gl);
-void						cleanup_enhanced_rendering(t_gl *gl);
-void						calculate_triangle_normals(float3 *triangles, int num_triangles, t_vertex_enhanced *enhanced_vertices);
-void						generate_triangle_colors(float3 *triangles, int num_triangles, t_vertex_enhanced *enhanced_vertices, t_data *data);
-void						update_enhanced_vertices(t_data *data);
-void						render_enhanced(t_data *data);
-GLuint						compile_enhanced_shaders(void);
-float3						calculate_face_normal(float3 v1, float3 v2, float3 v3);
 
 #endif
