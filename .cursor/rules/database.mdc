@@ -1,0 +1,322 @@
+---
+description: Data Structures and Mathematical Algorithms for Graphics
+alwaysApply: false
+---
+# Data Structures and Mathematical Algorithms Rules
+
+## Data Structure Design Principles
+- Choose data structures based on access patterns and performance requirements
+- Use appropriate memory layouts for cache efficiency
+- Implement proper alignment for SIMD operations where beneficial
+- Design structures with clear ownership and lifetime semantics
+- Use consistent naming conventions (snake_case for C, descriptive names)
+
+## Matrix and Vector Operations
+- Use column-major layout for OpenGL compatibility
+- Implement SIMD optimizations for vector operations where possible
+- Handle edge cases (zero vectors, singular matrices, numerical precision)
+- Provide both in-place and copy versions of operations
+- Validate matrix dimensions before operations
+
+```c
+// Optimized matrix operations service
+typedef struct matrix4 {
+    float data[16];  // Column-major for OpenGL compatibility
+} matrix4_t;
+
+typedef struct vector3 {
+    float x, y, z;
+} vector3_t;
+
+// Matrix operations with bounds checking
+int matrix4_multiply(const matrix4_t* a, const matrix4_t* b, matrix4_t* result) {
+    printf("\x1b[36m[%s]\x1b[0m Matrix multiplication starting\n", __FILE__);
+    
+    if (!a || !b || !result) {
+        printf("\x1b[31m[%s]\x1b[0m Error: NULL pointer in matrix multiplication\n", __FILE__);
+        return -1;
+    }
+    
+    // Perform column-major matrix multiplication
+    for (int col = 0; col < 4; col++) {
+        for (int row = 0; row < 4; row++) {
+            float sum = 0.0f;
+            for (int k = 0; k < 4; k++) {
+                sum += a->data[k * 4 + row] * b->data[col * 4 + k];
+            }
+            result->data[col * 4 + row] = sum;
+        }
+    }
+    
+    printf("\x1b[32m[%s]\x1b[0m Matrix multiplication completed\n", __FILE__);
+    return 0;
+}
+
+// Vector normalization with safety checks
+int vector3_normalize(vector3_t* vec) {
+    if (!vec) return -1;
+    
+    float length_sq = vec->x * vec->x + vec->y * vec->y + vec->z * vec->z;
+    
+    if (length_sq < 1e-6f) {
+        printf("\x1b[33m[%s]\x1b[0m Warning: Attempting to normalize zero vector\n", __FILE__);
+        return -1;
+    }
+    
+    float inv_length = 1.0f / sqrtf(length_sq);
+    vec->x *= inv_length;
+    vec->y *= inv_length;
+    vec->z *= inv_length;
+    
+    return 0;
+}
+```
+
+## Hash Table and Spatial Data Structures
+- Use appropriate hash functions for geometric data
+- Implement spatial partitioning for efficient queries
+- Handle hash collisions gracefully
+- Size hash tables appropriately for expected data volume
+
+```c
+// Spatial hash table for point cloud organization
+#define HASH_TABLE_SIZE 1024
+#define SPATIAL_CELL_SIZE 1.0f
+
+typedef struct spatial_hash_entry {
+    vector3_t point;
+    void* data;
+    struct spatial_hash_entry* next;
+} spatial_hash_entry_t;
+
+typedef struct spatial_hash_table {
+    spatial_hash_entry_t* buckets[HASH_TABLE_SIZE];
+    size_t count;
+} spatial_hash_table_t;
+
+// Hash function for 3D coordinates
+unsigned int spatial_hash(float x, float y, float z) {
+    int ix = (int)(x / SPATIAL_CELL_SIZE);
+    int iy = (int)(y / SPATIAL_CELL_SIZE);
+    int iz = (int)(z / SPATIAL_CELL_SIZE);
+    
+    // Simple hash combining coordinates
+    unsigned int hash = ((unsigned int)ix * 73856093) ^
+                       ((unsigned int)iy * 19349663) ^
+                       ((unsigned int)iz * 83492791);
+    
+    return hash % HASH_TABLE_SIZE;
+}
+
+int spatial_hash_insert(spatial_hash_table_t* table, const vector3_t* point, void* data) {
+    if (!table || !point) {
+        printf("\x1b[31m[%s]\x1b[0m Error: NULL pointer in hash insert\n", __FILE__);
+        return -1;
+    }
+    
+    unsigned int index = spatial_hash(point->x, point->y, point->z);
+    
+    spatial_hash_entry_t* entry = malloc(sizeof(spatial_hash_entry_t));
+    if (!entry) {
+        printf("\x1b[31m[%s]\x1b[0m Error: Memory allocation failed\n", __FILE__);
+        return -1;
+    }
+    
+    entry->point = *point;
+    entry->data = data;
+    entry->next = table->buckets[index];
+    table->buckets[index] = entry;
+    table->count++;
+    
+    return 0;
+}
+```
+
+## Complex Number Operations
+- Implement numerically stable complex arithmetic
+- Handle edge cases (infinity, NaN, overflow)
+- Use appropriate precision for fractal calculations
+- Optimize hot-path complex operations
+
+```c
+// Complex number operations for fractal calculations
+typedef struct complex_number {
+    double real;
+    double imag;
+} complex_t;
+
+// Complex multiplication with overflow checking
+int complex_multiply(const complex_t* a, const complex_t* b, complex_t* result) {
+    if (!a || !b || !result) {
+        printf("\x1b[31m[%s]\x1b[0m Error: NULL pointer in complex multiply\n", __FILE__);
+        return -1;
+    }
+    
+    printf("\x1b[36m[%s]\x1b[0m Computing complex multiplication\n", __FILE__);
+    
+    double real_part = (a->real * b->real) - (a->imag * b->imag);
+    double imag_part = (a->real * b->imag) + (a->imag * b->real);
+    
+    // Check for overflow or invalid results
+    if (!isfinite(real_part) || !isfinite(imag_part)) {
+        printf("\x1b[33m[%s]\x1b[0m Warning: Complex multiplication overflow\n", __FILE__);
+        return -1;
+    }
+    
+    result->real = real_part;
+    result->imag = imag_part;
+    
+    printf("\x1b[32m[%s]\x1b[0m Complex multiplication completed\n", __FILE__);
+    return 0;
+}
+
+// Complex magnitude squared (avoids sqrt for efficiency)
+double complex_magnitude_squared(const complex_t* c) {
+    if (!c) return -1.0;
+    return (c->real * c->real) + (c->imag * c->imag);
+}
+
+// Complex addition
+int complex_add(const complex_t* a, const complex_t* b, complex_t* result) {
+    if (!a || !b || !result) return -1;
+    
+    result->real = a->real + b->real;
+    result->imag = a->imag + b->imag;
+    
+    return isfinite(result->real) && isfinite(result->imag) ? 0 : -1;
+}
+```
+
+## Data Validation
+- Validate data at multiple layers (client, server, database)
+- Use schema validation libraries (Joi, Yup, etc.)
+- Implement proper data sanitization
+- Apply business rule validation
+
+```javascript
+// Data validation service
+const validateUserData = (data) => {
+  console.log('\x1b[36m[validation-service.js]\x1b[0m Validating user data');
+  
+  const schema = {
+    email: {
+      required: true,
+      type: 'email',
+      maxLength: 255
+    },
+    name: {
+      required: true,
+      type: 'string',
+      minLength: 2,
+      maxLength: 100
+    },
+    age: {
+      required: false,
+      type: 'integer',
+      min: 0,
+      max: 120
+    }
+  };
+
+  const errors = [];
+  
+  for (const [field, rules] of Object.entries(schema)) {
+    if (rules.required && !data[field]) {
+      errors.push(`${field} is required`);
+      continue;
+    }
+    
+    if (data[field] && !validateFieldType(data[field], rules)) {
+      errors.push(`${field} validation failed`);
+    }
+  }
+
+  if (errors.length > 0) {
+    console.error('\x1b[31m[validation-service.js]\x1b[0m Validation errors:', errors);
+    throw new Error(`Validation failed: ${errors.join(', ')}`);
+  }
+  
+  console.log('\x1b[32m[validation-service.js]\x1b[0m Data validation passed');
+  return true;
+};
+```
+
+## Caching Strategies
+- Implement query result caching for expensive operations
+- Use appropriate cache invalidation strategies
+- Cache at different levels (query, object, page)
+- Monitor cache hit rates and effectiveness
+
+## Data Migration
+- Use versioned migration files
+- Implement both up and down migration methods
+- Test migrations on production-like data
+- Keep migrations atomic and reversible
+
+```javascript
+// Migration runner
+const runMigrations = async () => {
+  console.log('\x1b[36m[migration-runner.js]\x1b[0m Starting database migrations');
+  
+  try {
+    const appliedMigrations = await getAppliedMigrations();
+    const availableMigrations = await getAvailableMigrations();
+    
+    const pendingMigrations = availableMigrations.filter(
+      migration => !appliedMigrations.includes(migration.version)
+    );
+    
+    for (const migration of pendingMigrations) {
+      console.log(`\x1b[33m[migration-runner.js]\x1b[0m Applying migration: ${migration.version}`);
+      await migration.up(db);
+      await recordMigration(migration.version);
+      console.log(`\x1b[32m[migration-runner.js]\x1b[0m Migration ${migration.version} completed`);
+    }
+    
+    console.log('\x1b[32m[migration-runner.js]\x1b[0m All migrations completed successfully');
+  } catch (error) {
+    console.error('\x1b[31m[migration-runner.js]\x1b[0m Migration failed:', error);
+    throw error;
+  }
+};
+```
+
+## Backup and Recovery
+- Implement automated backup strategies
+- Test backup restoration procedures regularly
+- Use point-in-time recovery capabilities
+- Store backups in secure, separate locations
+
+## Security Considerations
+- Use parameterized queries to prevent SQL injection
+- Implement proper access controls and permissions
+- Encrypt sensitive data at rest
+- Use secure connection protocols (TLS/SSL)
+- Regularly update database software and apply security patches
+
+## Performance Monitoring
+- Monitor query performance and execution times
+- Track database connection usage
+- Monitor disk space and growth patterns
+- Set up alerts for performance degradation
+
+```javascript
+// Database performance monitor
+const monitorDatabasePerformance = () => {
+  setInterval(async () => {
+    try {
+      const stats = await db.query('SHOW STATUS');
+      const connections = stats.find(s => s.Variable_name === 'Threads_connected');
+      const queries = stats.find(s => s.Variable_name === 'Questions');
+      
+      console.log(`\x1b[36m[db-monitor.js]\x1b[0m DB Stats - Connections: ${connections.Value}, Queries: ${queries.Value}`);
+      
+      if (parseInt(connections.Value) > 80) {
+        console.warn('\x1b[33m[db-monitor.js]\x1b[0m High database connection count detected');
+      }
+    } catch (error) {
+      console.error('\x1b[31m[db-monitor.js]\x1b[0m Database monitoring error:', error);
+    }
+  }, 60000); // Check every minute
+};
+```

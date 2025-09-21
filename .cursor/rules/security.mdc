@@ -1,0 +1,363 @@
+---
+description: C/C++ Memory Safety and Input Validation Guidelines
+type: always
+priority: 950
+---
+
+# C/C++ Memory Safety and Security Guidelines
+
+## Memory Management Safety
+- Always check malloc/calloc return values for NULL
+- Pair every malloc with exactly one free
+- Set pointers to NULL after freeing them to prevent double-free
+- Use valgrind, AddressSanitizer, or similar tools to detect memory issues
+- Implement proper cleanup in all error paths
+
+```c
+// Safe memory allocation and cleanup patterns
+#include <stdlib.h>
+#include <string.h>
+
+// Safe memory allocation with error checking
+void* safe_malloc(size_t size) {
+    if (size == 0) {
+        printf("\x1b[33m[%s]\x1b[0m Warning: Attempting to allocate 0 bytes\n", __FILE__);
+        return NULL;
+    }
+    
+    void* ptr = malloc(size);
+    if (!ptr) {
+        printf("\x1b[31m[%s]\x1b[0m Error: Memory allocation failed for %zu bytes\n", __FILE__, size);
+        return NULL;
+    }
+    
+    printf("\x1b[32m[%s]\x1b[0m Allocated %zu bytes at %p\n", __FILE__, size, ptr);
+    return ptr;
+}
+
+// Safe memory deallocation
+void safe_free(void** ptr) {
+    if (!ptr || !*ptr) {
+        return;
+    }
+    
+    printf("\x1b[36m[%s]\x1b[0m Freeing memory at %p\n", __FILE__, *ptr);
+    free(*ptr);
+    *ptr = NULL;  // Prevent double-free
+}
+
+// Safe string operations
+int safe_strcpy(char* dest, size_t dest_size, const char* src) {
+    if (!dest || !src || dest_size == 0) {
+        printf("\x1b[31m[%s]\x1b[0m Error: Invalid parameters in safe_strcpy\n", __FILE__);
+        return -1;
+    }
+    
+    size_t src_len = strlen(src);
+    if (src_len >= dest_size) {
+        printf("\x1b[31m[%s]\x1b[0m Error: Buffer overflow prevented in strcpy\n", __FILE__);
+        return -1;
+    }
+    
+    strncpy(dest, src, dest_size - 1);
+    dest[dest_size - 1] = '\0';  // Ensure null termination
+    return 0;
+}
+```
+
+## Input Validation and Sanitization
+- Validate all user input on both client and server side
+- Sanitize data before processing or storing
+- Use parameterized queries to prevent SQL injection
+- Implement proper data type validation
+- Escape HTML content to prevent XSS attacks
+
+```javascript
+// Input validation and sanitization service
+const ValidationService = {
+  sanitizeString(input) {
+    if (typeof input !== 'string') return '';
+    return input.trim().replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  },
+
+  validateEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  },
+
+  validatePassword(password) {
+    // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
+    return passwordRegex.test(password);
+  },
+
+  sanitizeInput(data) {
+    console.log('\x1b[36m[validation-service.js]\x1b[0m Sanitizing input data');
+    
+    const sanitized = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (typeof value === 'string') {
+        sanitized[key] = this.sanitizeString(value);
+      } else {
+        sanitized[key] = value;
+      }
+    }
+    
+    console.log('\x1b[32m[validation-service.js]\x1b[0m Input sanitization completed');
+    return sanitized;
+  }
+};
+```
+
+## CORS and Cross-Origin Security
+- Configure CORS properly for your domain requirements
+- Restrict origins to known, trusted domains
+- Use appropriate CORS headers for different endpoints
+- Implement preflight request handling
+
+```javascript
+// Secure CORS configuration
+const corsOptions = {
+  origin: (origin, callback) => {
+    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      console.log('\x1b[32m[cors-config.js]\x1b[0m Origin allowed:', origin);
+      callback(null, true);
+    } else {
+      console.warn('\x1b[33m[cors-config.js]\x1b[0m Origin blocked:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+```
+
+## Environment Variables and Secrets
+- Never commit sensitive data to version control
+- Use environment variables for all configuration
+- Implement proper secrets management
+- Rotate secrets regularly in production
+- Use different secrets for different environments
+
+```javascript
+// Secure configuration management
+const config = {
+  port: process.env.PORT || 3000,
+  dbUrl: process.env.DATABASE_URL,
+  jwtSecret: process.env.JWT_SECRET,
+  apiKey: process.env.API_KEY,
+  
+  // Validate required environment variables
+  validate() {
+    console.log('\x1b[36m[config.js]\x1b[0m Validating environment configuration');
+    
+    const required = ['DATABASE_URL', 'JWT_SECRET', 'API_KEY'];
+    const missing = required.filter(key => !process.env[key]);
+    
+    if (missing.length > 0) {
+      console.error('\x1b[31m[config.js]\x1b[0m Missing required environment variables:', missing);
+      throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+    }
+    
+    console.log('\x1b[32m[config.js]\x1b[0m Environment configuration validated');
+    return this;
+  }
+};
+```
+
+## Rate Limiting and DDoS Protection
+- Implement rate limiting on all public endpoints
+- Use different limits for different endpoint types
+- Implement IP-based and user-based rate limiting
+- Log and monitor suspicious activity patterns
+
+```javascript
+// Rate limiting implementation
+const rateLimit = require('express-rate-limit');
+
+const createRateLimiter = (options = {}) => {
+  return rateLimit({
+    windowMs: options.windowMs || 15 * 60 * 1000, // 15 minutes
+    max: options.max || 100, // requests per window
+    message: {
+      error: 'Too many requests, please try again later',
+      retryAfter: options.windowMs || 15 * 60 * 1000
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res) => {
+      console.warn(`\x1b[33m[rate-limiter.js]\x1b[0m Rate limit exceeded for IP: ${req.ip}`);
+      res.status(429).json({
+        error: 'Too many requests',
+        retryAfter: options.windowMs || 15 * 60 * 1000
+      });
+    }
+  });
+};
+
+// Different rate limits for different endpoints
+const authLimiter = createRateLimiter({ max: 5, windowMs: 15 * 60 * 1000 }); // 5 auth attempts per 15 min
+const apiLimiter = createRateLimiter({ max: 100, windowMs: 15 * 60 * 1000 }); // 100 API calls per 15 min
+```
+
+## Data Encryption and Privacy
+- Encrypt sensitive data at rest using strong algorithms
+- Use HTTPS for all data transmission
+- Implement proper key management
+- Hash passwords with salt using bcrypt or similar
+- Comply with data privacy regulations (GDPR, etc.)
+
+```javascript
+// Data encryption utilities
+const crypto = require('crypto');
+
+const EncryptionService = {
+  algorithm: 'aes-256-gcm',
+  
+  encrypt(text) {
+    console.log('\x1b[36m[encryption-service.js]\x1b[0m Encrypting data');
+    
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipher(this.algorithm, process.env.ENCRYPTION_KEY);
+    cipher.setAAD(Buffer.from('additional-data'));
+    
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    
+    const authTag = cipher.getAuthTag();
+    
+    return {
+      encrypted,
+      iv: iv.toString('hex'),
+      authTag: authTag.toString('hex')
+    };
+  },
+
+  decrypt(encryptedData) {
+    console.log('\x1b[36m[encryption-service.js]\x1b[0m Decrypting data');
+    
+    try {
+      const decipher = crypto.createDecipher(this.algorithm, process.env.ENCRYPTION_KEY);
+      decipher.setAAD(Buffer.from('additional-data'));
+      decipher.setAuthTag(Buffer.from(encryptedData.authTag, 'hex'));
+      
+      let decrypted = decipher.update(encryptedData.encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      
+      return decrypted;
+    } catch (error) {
+      console.error('\x1b[31m[encryption-service.js]\x1b[0m Decryption failed:', error);
+      throw new Error('Decryption failed');
+    }
+  }
+};
+```
+
+## Security Headers
+- Implement proper security headers for all responses
+- Use Content Security Policy (CSP)
+- Set appropriate cache control headers
+- Implement HSTS for HTTPS enforcement
+
+```javascript
+// Security headers middleware
+const securityHeaders = (req, res, next) => {
+  console.log('\x1b[36m[security-headers.js]\x1b[0m Setting security headers');
+  
+  // Content Security Policy
+  res.setHeader('Content-Security-Policy', 
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+  );
+  
+  // Other security headers
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=()');
+  
+  // HSTS (only in production with HTTPS)
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  
+  next();
+};
+```
+
+## Error Handling and Information Disclosure
+- Never expose internal error details to users
+- Log detailed errors securely for debugging
+- Use generic error messages for user-facing responses
+- Implement proper error classification
+
+```javascript
+// Secure error handling
+const errorHandler = (err, req, res, next) => {
+  console.error(`\x1b[31m[error-handler.js]\x1b[0m Error occurred:`, {
+    message: err.message,
+    stack: err.stack,
+    url: req.url,
+    method: req.method,
+    ip: req.ip,
+    userAgent: req.get('User-Agent')
+  });
+
+  // Don't expose internal error details in production
+  if (process.env.NODE_ENV === 'production') {
+    res.status(500).json({
+      error: 'An internal server error occurred',
+      timestamp: new Date().toISOString(),
+      requestId: req.id // if you have request ID middleware
+    });
+  } else {
+    res.status(500).json({
+      error: err.message,
+      stack: err.stack
+    });
+  }
+};
+```
+
+## Logging and Monitoring
+- Log security-relevant events (failed logins, privilege escalations)
+- Monitor for suspicious patterns and automated attacks
+- Implement proper log retention and analysis
+- Use structured logging for security events
+
+```javascript
+// Security logging service
+const SecurityLogger = {
+  logAuthAttempt(ip, email, success) {
+    const logData = {
+      event: 'auth_attempt',
+      ip,
+      email: email ? this.hashEmail(email) : null,
+      success,
+      timestamp: new Date().toISOString()
+    };
+    
+    const color = success ? '\x1b[32m' : '\x1b[31m';
+    console.log(`${color}[security-logger.js]\x1b[0m Auth attempt:`, JSON.stringify(logData));
+  },
+
+  logSuspiciousActivity(ip, activity, details = {}) {
+    const logData = {
+      event: 'suspicious_activity',
+      ip,
+      activity,
+      details,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.warn(`\x1b[33m[security-logger.js]\x1b[0m Suspicious activity:`, JSON.stringify(logData));
+  },
+
+  hashEmail(email) {
+    return crypto.createHash('sha256').update(email).digest('hex').substring(0, 8);
+  }
+};
+```

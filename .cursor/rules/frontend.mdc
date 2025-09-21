@@ -1,0 +1,149 @@
+---
+description: OpenGL Graphics and Rendering Rules
+globs: .c,.h
+alwaysApply: false
+---
+# OpenGL Graphics and Rendering Rules
+
+## OpenGL Context and Initialization
+- Always check for OpenGL context creation success
+- Set up proper error handling for GLFW window creation
+- Initialize GLEW/GLAD after context creation
+- Verify OpenGL version and extension support
+- Handle context loss and recreation gracefully
+
+```c
+// OpenGL context setup pattern
+GLFWwindow* init_opengl_context(int width, int height, const char* title) {
+    printf("\x1b[36m[%s]\x1b[0m Initializing OpenGL context\n", __FILE__);
+    
+    if (!glfwInit()) {
+        printf("\x1b[31m[%s]\x1b[0m Failed to initialize GLFW\n", __FILE__);
+        return NULL;
+    }
+    
+    // Set OpenGL version and profile
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    
+    GLFWwindow* window = glfwCreateWindow(width, height, title, NULL, NULL);
+    if (!window) {
+        printf("\x1b[31m[%s]\x1b[0m Failed to create GLFW window\n", __FILE__);
+        glfwTerminate();
+        return NULL;
+    }
+    
+    glfwMakeContextCurrent(window);
+    printf("\x1b[32m[%s]\x1b[0m OpenGL context initialized successfully\n", __FILE__);
+    return window;
+}
+```
+
+## Shader Management
+- Validate shader compilation and linking
+- Implement proper shader cleanup and resource management
+- Use uniform buffer objects for shared data
+- Cache shader programs and uniforms
+- Handle shader compilation errors gracefully
+
+```c
+// Shader compilation with error checking
+GLuint compile_shader(const char* source, GLenum type) {
+    printf("\x1b[36m[%s]\x1b[0m Compiling shader\n", __FILE__);
+    
+    GLuint shader = glCreateShader(type);
+    glShaderSource(shader, 1, &source, NULL);
+    glCompileShader(shader);
+    
+    GLint success;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        char info_log[512];
+        glGetShaderInfoLog(shader, 512, NULL, info_log);
+        printf("\x1b[31m[%s]\x1b[0m Shader compilation failed: %s\n", __FILE__, info_log);
+        glDeleteShader(shader);
+        return 0;
+    }
+    
+    printf("\x1b[32m[%s]\x1b[0m Shader compiled successfully\n", __FILE__);
+    return shader;
+}
+```
+
+## Buffer Management
+- Use vertex array objects (VAOs) for efficient state management
+- Implement proper buffer orphaning for dynamic data
+- Use appropriate buffer usage hints (GL_STATIC_DRAW, GL_DYNAMIC_DRAW)
+- Clean up all buffers and vertex arrays on shutdown
+- Batch buffer operations to minimize state changes
+
+## Rendering Pipeline
+- Minimize OpenGL state changes per frame
+- Use instanced rendering for repeated geometry
+- Implement frustum culling for large scenes
+- Sort render calls by shader, then by texture
+- Use proper depth testing and blending modes
+
+## Mathematical Precision
+- Use appropriate data types for vertex coordinates (float vs double)
+- Implement proper matrix transformations for camera and objects
+- Handle floating-point precision issues in fractal calculations
+- Use consistent coordinate systems throughout the pipeline
+- Validate mathematical operations for edge cases (division by zero, infinity)
+
+```c
+// Matrix multiplication with bounds checking
+void multiply_matrix4x4(const float a[16], const float b[16], float result[16]) {
+    printf("\x1b[36m[%s]\x1b[0m Performing matrix multiplication\n", __FILE__);
+    
+    if (!a || !b || !result) {
+        printf("\x1b[31m[%s]\x1b[0m Invalid matrix pointers\n", __FILE__);
+        return;
+    }
+    
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            result[i * 4 + j] = 0.0f;
+            for (int k = 0; k < 4; k++) {
+                result[i * 4 + j] += a[i * 4 + k] * b[k * 4 + j];
+            }
+        }
+    }
+}
+```
+
+## Performance Optimization
+- Profile rendering performance using GL timing queries
+- Use level-of-detail (LOD) systems for complex geometry
+- Implement occlusion culling where appropriate
+- Cache frequently used calculations
+- Use efficient data structures for spatial queries
+
+## Error Handling and Debugging
+- Check OpenGL errors after every GL call in debug builds
+- Implement proper OpenGL debug callbacks
+- Validate input parameters for all graphics functions
+- Use consistent error reporting throughout the graphics pipeline
+- Log rendering statistics for performance monitoring
+
+```c
+// OpenGL error checking macro
+#ifdef DEBUG
+#define GL_CHECK() do { \
+    GLenum error = glGetError(); \
+    if (error != GL_NO_ERROR) { \
+        printf("\x1b[31m[%s:%d]\x1b[0m OpenGL error: 0x%x\n", __FILE__, __LINE__, error); \
+    } \
+} while(0)
+#else
+#define GL_CHECK()
+#endif
+```
+
+## Resource Management
+- Implement proper cleanup for all OpenGL resources
+- Use RAII patterns where possible in C++
+- Handle context loss and resource recreation
+- Monitor GPU memory usage for large datasets
+- Implement resource pooling for frequently created/destroyed objects

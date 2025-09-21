@@ -1,0 +1,71 @@
+---
+alwaysApply: true
+---
+# C/C++ Graphics Hackathon Rules
+
+## Core Principles
+- **Fix first, optimize second**: Get the code compiling and running before adding features
+- **Understand before changing**: Read and comprehend the mathematical algorithms
+- **Memory safety always**: Proper allocation/deallocation and bounds checking
+- **Performance-critical**: Graphics code requires efficient algorithms and data structures
+- **Mathematical precision**: Maintain accuracy in complex number operations and matrix calculations
+
+## C/C++ Standards
+- Use modern C11/C++17 standards where possible
+- Implement proper error handling with return codes and error checking
+- Add debug printf statements with colors: `printf("\x1b[36m[%s]\x1b[0m %s\n", __FILE__, message)`
+- Keep functions focused and well-documented (especially mathematical functions)
+- Use descriptive variable names for mathematical concepts
+- Comment complex mathematical algorithms thoroughly
+
+## Legacy Code Approach
+- Document existing algorithms before modifying them
+- Fix compilation errors systematically
+- Preserve mathematical correctness while improving code quality
+- Track all changes made during restoration process
+- Test incrementally after each major fix
+
+## OpenGL and Graphics Guidelines
+- Check for OpenGL errors after every GL call in debug builds
+- Use proper vertex buffer management and cleanup
+- Implement efficient shader compilation and validation
+- Handle window resize and context changes properly
+- Profile rendering performance for bottlenecks
+
+## Mathematical Computation
+- Use appropriate precision (float vs double) for mathematical calculations
+- Implement proper complex number operations
+- Ensure matrix operations maintain mathematical integrity
+- Handle edge cases in fractal generation (infinity, NaN values)
+- Validate input parameters for mathematical functions
+
+## Memory Management
+- Always pair malloc/free and new/delete calls
+- Check for NULL pointers before dereferencing
+- Use proper array bounds checking
+- Clean up OpenGL resources (textures, buffers, shaders)
+- Implement proper cleanup in error paths
+
+## Build System and Dependencies
+- Fix compilation errors before runtime issues
+- Ensure proper linking of OpenGL and GLFW libraries
+- Handle cross-platform compatibility (Linux, macOS, Windows)
+- Document build dependencies and setup process
+- Use appropriate compiler flags for debugging and optimization
+
+## Debugging and Logging  
+- Use colored printf output for different log levels:
+  - Info: `\x1b[36m` (cyan)
+  - Success: `\x1b[32m` (green) 
+  - Warning: `\x1b[33m` (yellow)
+  - Error: `\x1b[31m` (red)
+- Include file name in debug output: `printf("\x1b[31m[%s:%d]\x1b[0m Error: %s\n", __FILE__, __LINE__, message)`
+- Log OpenGL state changes and mathematical computations
+- Use conditional compilation for debug output (#ifdef DEBUG)
+
+## Performance Optimization
+- Profile mathematical computations for bottlenecks
+- Optimize matrix operations and complex number calculations
+- Use efficient data structures for point clouds and meshes
+- Minimize OpenGL state changes and draw calls
+- Consider parallel processing for computationally intensive operations

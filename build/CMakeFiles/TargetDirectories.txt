@@ -1,0 +1,3 @@
+/Users/giorgobg/Desktop/cursor-reverse-hackathon/build/CMakeFiles/morphosis.dir
+/Users/giorgobg/Desktop/cursor-reverse-hackathon/build/CMakeFiles/edit_cache.dir
+/Users/giorgobg/Desktop/cursor-reverse-hackathon/build/CMakeFiles/rebuild_cache.dir

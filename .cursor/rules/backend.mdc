@@ -1,0 +1,196 @@
+---
+description: C/C++ Systems Programming and Core Logic Rules
+globs: src,.c,.h
+alwaysApply: false
+---
+# C/C++ Systems Programming Rules
+
+## Function Design Principles
+- Keep functions small and focused (single responsibility)
+- Use descriptive function names that explain what they do
+- Document complex mathematical functions with comments
+- Return consistent error codes and status indicators
+- Handle edge cases and invalid inputs gracefully
+
+## Error Handling and Return Codes
+- Use consistent return value conventions (0 for success, negative for errors)
+- Check return values of all function calls
+- Propagate errors up the call stack appropriately
+- Log errors with context and debugging information
+
+```c
+// Standard error handling pattern
+typedef enum {
+    SUCCESS = 0,
+    ERROR_NULL_POINTER = -1,
+    ERROR_INVALID_INPUT = -2,
+    ERROR_MEMORY_ALLOCATION = -3,
+    ERROR_OPENGL_FAILURE = -4
+} error_code_t;
+
+int safe_matrix_multiply(const float* a, const float* b, float* result, int size) {
+    printf("\x1b[36m[%s]\x1b[0m Matrix multiplication starting\n", __FILE__);
+    
+    if (!a || !b || !result) {
+        printf("\x1b[31m[%s]\x1b[0m Error: NULL pointer passed to matrix_multiply\n", __FILE__);
+        return ERROR_NULL_POINTER;
+    }
+    
+    if (size <= 0) {
+        printf("\x1b[31m[%s]\x1b[0m Error: Invalid matrix size: %d\n", __FILE__, size);
+        return ERROR_INVALID_INPUT;
+    }
+    
+    // Perform matrix multiplication...
+    printf("\x1b[32m[%s]\x1b[0m Matrix multiplication completed successfully\n", __FILE__);
+    return SUCCESS;
+}
+```
+
+## Memory Management Best Practices
+- Always check malloc/calloc return values for NULL
+- Pair every malloc with exactly one free
+- Set pointers to NULL after freeing them
+- Use valgrind or similar tools to detect memory leaks
+- Implement proper cleanup in error paths
+- Consider using memory pools for frequent allocations
+
+## Mathematical Computation Standards
+- Use appropriate numerical precision (float vs double)
+- Handle special cases (infinity, NaN, division by zero)
+- Document mathematical algorithms and their limitations
+- Validate input ranges for mathematical functions
+- Use consistent coordinate systems and units
+
+```c
+// Safe complex number operations
+typedef struct {
+    double real;
+    double imag;
+} complex_t;
+
+int complex_multiply(const complex_t* a, const complex_t* b, complex_t* result) {
+    printf("\x1b[36m[%s]\x1b[0m Complex multiplication\n", __FILE__);
+    
+    if (!a || !b || !result) {
+        return ERROR_NULL_POINTER;
+    }
+    
+    // Check for potential overflow
+    double real_part = (a->real * b->real) - (a->imag * b->imag);
+    double imag_part = (a->real * b->imag) + (a->imag * b->real);
+    
+    if (!isfinite(real_part) || !isfinite(imag_part)) {
+        printf("\x1b[33m[%s]\x1b[0m Warning: Complex multiplication overflow\n", __FILE__);
+        return ERROR_INVALID_INPUT;
+    }
+    
+    result->real = real_part;
+    result->imag = imag_part;
+    return SUCCESS;
+}
+```
+
+## File I/O and Resource Management
+- Always check file operations for errors
+- Close all opened files and free resources
+- Use appropriate file modes (binary vs text)
+- Handle cross-platform path separators
+- Validate file formats and data integrity
+
+## Build System Integration
+- Write platform-independent code where possible
+- Use appropriate compiler flags for debugging/optimization
+- Handle different library locations across platforms
+- Document build dependencies clearly
+- Support both debug and release builds
+
+## Data Structure Design
+- Choose appropriate data structures for performance requirements
+- Implement proper data structure cleanup functions
+- Use const correctness for read-only data
+- Consider cache locality for performance-critical structures
+- Document data structure invariants and usage patterns
+
+```c
+// Example data structure with proper cleanup
+typedef struct point_cloud {
+    float* vertices;
+    int* indices;
+    size_t vertex_count;
+    size_t index_count;
+    size_t capacity;
+} point_cloud_t;
+
+point_cloud_t* point_cloud_create(size_t initial_capacity) {
+    printf("\x1b[36m[%s]\x1b[0m Creating point cloud with capacity %zu\n", __FILE__, initial_capacity);
+    
+    point_cloud_t* cloud = malloc(sizeof(point_cloud_t));
+    if (!cloud) {
+        printf("\x1b[31m[%s]\x1b[0m Failed to allocate point cloud\n", __FILE__);
+        return NULL;
+    }
+    
+    cloud->vertices = malloc(initial_capacity * 3 * sizeof(float));
+    cloud->indices = malloc(initial_capacity * sizeof(int));
+    
+    if (!cloud->vertices || !cloud->indices) {
+        point_cloud_destroy(cloud);
+        return NULL;
+    }
+    
+    cloud->vertex_count = 0;
+    cloud->index_count = 0;
+    cloud->capacity = initial_capacity;
+    
+    printf("\x1b[32m[%s]\x1b[0m Point cloud created successfully\n", __FILE__);
+    return cloud;
+}
+
+void point_cloud_destroy(point_cloud_t* cloud) {
+    if (!cloud) return;
+    
+    printf("\x1b[36m[%s]\x1b[0m Destroying point cloud\n", __FILE__);
+    
+    free(cloud->vertices);
+    free(cloud->indices);
+    free(cloud);
+}
+```
+
+## Performance Optimization
+- Profile code to identify actual bottlenecks
+- Use appropriate algorithms and data structures
+- Consider cache-friendly data layouts
+- Minimize dynamic memory allocation in tight loops
+- Use compiler optimizations appropriately
+
+## Multi-threading Considerations
+- Use proper synchronization primitives
+- Avoid race conditions in shared data access
+- Consider using thread-local storage where appropriate
+- Document thread safety requirements for functions
+- Handle thread creation and cleanup properly
+
+## Debugging and Logging Standards
+- Use conditional compilation for debug output (#ifdef DEBUG)
+- Include file name and line number in error messages
+- Log important state changes and computations
+- Use consistent log levels and formatting
+- Implement proper log rotation for long-running programs
+
+```c
+// Debug logging macro
+#ifdef DEBUG
+#define DEBUG_LOG(fmt, ...) \
+    printf("\x1b[36m[%s:%d]\x1b[0m " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#else
+#define DEBUG_LOG(fmt, ...)
+#endif
+
+#define ERROR_LOG(fmt, ...) \
+    printf("\x1b[31m[%s:%d]\x1b[0m ERROR: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+
+#define SUCCESS_LOG(fmt, ...) \
+    printf("\x1b[32m[%s:%d]\x1b[0m " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+```

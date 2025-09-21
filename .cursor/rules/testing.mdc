@@ -1,0 +1,342 @@
+---
+description: C/C++ Testing Guidelines and Best Practices
+globs: .c,.h
+alwaysApply: false
+---
+# C/C++ Testing Rules and Guidelines
+
+## Testing Philosophy
+- Test mathematical functions with known inputs and expected outputs
+- Focus on edge cases (boundary conditions, overflow, underflow)
+- Test memory allocation/deallocation patterns thoroughly
+- Prioritize testing core algorithms (fractal generation, matrix operations)
+- Use unit tests for mathematical functions, integration tests for OpenGL rendering
+
+## Test Structure and Organization
+- Use descriptive test function names that explain the mathematical concept
+- Group related tests in the same test file or directory
+- Follow the AAA pattern: Setup data, Call function, Check results
+- Keep test files organized by mathematical domain (complex numbers, matrices, etc.)
+
+```c
+// Example test structure using a simple test framework
+#include <assert.h>
+#include <stdio.h>
+#include <math.h>
+#include "../src/lib_complex.h"
+
+// Simple test framework macros
+#define TEST_ASSERT(condition, message) \
+    do { \
+        if (!(condition)) { \
+            printf("\x1b[31m[%s:%d]\x1b[0m FAIL: %s\n", __FILE__, __LINE__, message); \
+            return -1; \
+        } else { \
+            printf("\x1b[32m[%s:%d]\x1b[0m PASS: %s\n", __FILE__, __LINE__, message); \
+        } \
+    } while(0)
+
+#define TEST_ASSERT_FLOAT_EQUAL(expected, actual, tolerance, message) \
+    TEST_ASSERT(fabs((expected) - (actual)) < (tolerance), message)
+
+// Test complex number multiplication
+int test_complex_multiply() {
+    printf("\x1b[36m[%s]\x1b[0m Starting complex multiplication tests\n", __FILE__);
+    
+    // Arrange
+    complex_t a = {3.0, 4.0};  // 3 + 4i
+    complex_t b = {1.0, 2.0};  // 1 + 2i
+    complex_t result;
+    
+    // Act
+    int status = complex_multiply(&a, &b, &result);
+    
+    // Assert
+    TEST_ASSERT(status == 0, "Complex multiplication should succeed");
+    TEST_ASSERT_FLOAT_EQUAL(-5.0, result.real, 1e-6, "Real part should be -5.0");
+    TEST_ASSERT_FLOAT_EQUAL(10.0, result.imag, 1e-6, "Imaginary part should be 10.0");
+    
+    printf("\x1b[32m[%s]\x1b[0m Complex multiplication test completed\n", __FILE__);
+    return 0;
+}
+
+// Test edge case: multiplication by zero
+int test_complex_multiply_by_zero() {
+    printf("\x1b[36m[%s]\x1b[0m Testing multiplication by zero\n", __FILE__);
+    
+    complex_t a = {5.0, -3.0};
+    complex_t zero = {0.0, 0.0};
+    complex_t result;
+    
+    int status = complex_multiply(&a, &zero, &result);
+    
+    TEST_ASSERT(status == 0, "Multiplication by zero should succeed");
+    TEST_ASSERT_FLOAT_EQUAL(0.0, result.real, 1e-6, "Real part should be 0.0");
+    TEST_ASSERT_FLOAT_EQUAL(0.0, result.imag, 1e-6, "Imaginary part should be 0.0");
+    
+    return 0;
+}
+
+// Test NULL pointer handling
+int test_complex_multiply_null_pointers() {
+    printf("\x1b[36m[%s]\x1b[0m Testing NULL pointer handling\n", __FILE__);
+    
+    complex_t a = {1.0, 2.0};
+    complex_t result;
+    
+    int status = complex_multiply(NULL, &a, &result);
+    TEST_ASSERT(status != 0, "Should fail with NULL first parameter");
+    
+    status = complex_multiply(&a, NULL, &result);
+    TEST_ASSERT(status != 0, "Should fail with NULL second parameter");
+    
+    status = complex_multiply(&a, &a, NULL);
+    TEST_ASSERT(status != 0, "Should fail with NULL result parameter");
+    
+    return 0;
+}
+```
+
+## Unit Testing Guidelines
+- Test individual functions and methods in isolation
+- Mock external dependencies (APIs, databases, file system)
+- Test edge cases and error conditions
+- Keep unit tests fast and independent
+
+```javascript
+// Mock pattern for external dependencies
+jest.mock('../services/api-service', () => ({
+  fetchUserData: jest.fn(),
+  updateUserData: jest.fn()
+}));
+
+const apiService = require('../services/api-service');
+
+describe('UserController', () => {
+  beforeEach(() => {
+    console.log('\x1b[36m[user-controller.test.js]\x1b[0m Resetting mocks');
+    jest.clearAllMocks();
+  });
+
+  it('should handle API errors gracefully', async () => {
+    // Arrange
+    apiService.fetchUserData.mockRejectedValue(new Error('API Error'));
+    
+    // Act & Assert
+    await expect(userController.getUser('123'))
+      .rejects
+      .toThrow('Failed to fetch user data');
+    
+    expect(apiService.fetchUserData).toHaveBeenCalledWith('123');
+  });
+});
+```
+
+## Integration Testing
+- Test complete workflows and user scenarios
+- Use real database connections with test data
+- Test API endpoints with actual HTTP requests
+- Verify data persistence and retrieval
+
+```javascript
+// Integration test example
+describe('User Registration Flow', () => {
+  let testDb;
+  
+  beforeAll(async () => {
+    console.log('\x1b[36m[integration.test.js]\x1b[0m Setting up test database');
+    testDb = await setupTestDatabase();
+  });
+  
+  afterAll(async () => {
+    console.log('\x1b[36m[integration.test.js]\x1b[0m Cleaning up test database');
+    await cleanupTestDatabase(testDb);
+  });
+
+  it('should complete full user registration', async () => {
+    const userData = {
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'securePassword123'
+    };
+
+    // Register user
+    const response = await request(app)
+      .post('/api/users/register')
+      .send(userData)
+      .expect(201);
+
+    // Verify user exists in database
+    const user = await testDb.query('SELECT * FROM users WHERE email = ?', [userData.email]);
+    expect(user).toHaveLength(1);
+    expect(user[0].name).toBe(userData.name);
+
+    console.log('\x1b[32m[integration.test.js]\x1b[0m Full registration flow test passed');
+  });
+});
+```
+
+## Frontend Testing (React)
+- Use React Testing Library for component testing
+- Test user interactions and component behavior
+- Mock API calls and external dependencies
+- Test accessibility and responsive design
+
+```javascript
+// React component testing
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import UserProfile from '../UserProfile';
+
+describe('UserProfile Component', () => {
+  const mockUser = {
+    id: '1',
+    name: 'John Doe',
+    email: 'john@example.com'
+  };
+
+  it('should display user information correctly', () => {
+    console.log('\x1b[36m[user-profile.test.jsx]\x1b[0m Testing user profile display');
+    
+    render(<UserProfile user={mockUser} />);
+    
+    expect(screen.getByText(mockUser.name)).toBeInTheDocument();
+    expect(screen.getByText(mockUser.email)).toBeInTheDocument();
+    
+    console.log('\x1b[32m[user-profile.test.jsx]\x1b[0m Profile display test passed');
+  });
+
+  it('should handle edit mode correctly', async () => {
+    const mockOnSave = jest.fn();
+    render(<UserProfile user={mockUser} onSave={mockOnSave} />);
+    
+    const editButton = screen.getByText('Edit');
+    fireEvent.click(editButton);
+    
+    const nameInput = screen.getByDisplayValue(mockUser.name);
+    fireEvent.change(nameInput, { target: { value: 'Jane Doe' } });
+    
+    const saveButton = screen.getByText('Save');
+    fireEvent.click(saveButton);
+    
+    await waitFor(() => {
+      expect(mockOnSave).toHaveBeenCalledWith({
+        ...mockUser,
+        name: 'Jane Doe'
+      });
+    });
+  });
+});
+```
+
+## API Testing
+- Test all HTTP methods (GET, POST, PUT, DELETE)
+- Verify response status codes and data structure
+- Test authentication and authorization
+- Test error handling and edge cases
+
+```javascript
+// API endpoint testing
+describe('API Endpoints', () => {
+  describe('POST /api/users', () => {
+    it('should create a new user', async () => {
+      console.log('\x1b[36m[api.test.js]\x1b[0m Testing user creation endpoint');
+      
+      const userData = {
+        name: 'New User',
+        email: 'newuser@example.com'
+      };
+
+      const response = await request(app)
+        .post('/api/users')
+        .send(userData)
+        .expect(201);
+
+      expect(response.body).toHaveProperty('id');
+      expect(response.body.name).toBe(userData.name);
+      expect(response.body.email).toBe(userData.email);
+      
+      console.log('\x1b[32m[api.test.js]\x1b[0m User creation endpoint test passed');
+    });
+
+    it('should validate required fields', async () => {
+      const response = await request(app)
+        .post('/api/users')
+        .send({})
+        .expect(400);
+
+      expect(response.body).toHaveProperty('errors');
+      expect(response.body.errors).toContain('Name is required');
+    });
+  });
+});
+```
+
+## Test Data Management
+- Use factories or builders to create test data
+- Implement proper test data cleanup
+- Use separate test database or schema
+- Seed test data consistently
+
+```javascript
+// Test data factory
+class UserFactory {
+  static create(overrides = {}) {
+    console.log('\x1b[36m[user-factory.js]\x1b[0m Creating test user');
+    
+    return {
+      id: Math.random().toString(36),
+      name: 'Test User',
+      email: `test${Date.now()}@example.com`,
+      createdAt: new Date(),
+      ...overrides
+    };
+  }
+
+  static createMany(count, overrides = {}) {
+    return Array.from({ length: count }, () => this.create(overrides));
+  }
+}
+```
+
+## Performance Testing
+- Test response times for critical endpoints
+- Verify application behavior under load
+- Monitor memory usage during tests
+- Test with realistic data volumes
+
+## Test Environment Setup
+- Use environment variables for test configuration
+- Implement proper test database setup/teardown
+- Mock external services consistently
+- Use test-specific configuration files
+
+```javascript
+// Test setup configuration
+const setupTestEnvironment = async () => {
+  console.log('\x1b[36m[test-setup.js]\x1b[0m Setting up test environment');
+  
+  // Set test environment variables
+  process.env.NODE_ENV = 'test';
+  process.env.DB_NAME = 'test_database';
+  
+  // Initialize test database
+  await initializeTestDatabase();
+  
+  // Setup global test utilities
+  global.testUtils = {
+    createTestUser: UserFactory.create,
+    cleanupDatabase: async () => {
+      console.log('\x1b[33m[test-setup.js]\x1b[0m Cleaning up test database');
+      await db.query('DELETE FROM users WHERE email LIKE "test%"');
+    }
+  };
+  
+  console.log('\x1b[32m[test-setup.js]\x1b[0m Test environment setup completed');
+};
+```
+
+## Continuous Integration
+- Run tests automatically on code changes
+- Maintain high test coverage for critical code
+- Fail builds on test failures
+- Generate and review test reports

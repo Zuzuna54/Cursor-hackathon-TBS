@@ -1,0 +1,238 @@
+---
+description: Graphics and Mathematical Performance Optimization
+globs: *optimization*,.c,.h
+alwaysApply: false
+---
+# Graphics and Mathematical Performance Optimization Rules
+
+## General Performance Principles
+- Profile mathematical computations and rendering pipelines
+- Focus on CPU-intensive fractal calculations and GPU bottlenecks
+- Cache frequently computed results (fractal iterations, matrix operations)
+- Use efficient algorithms for mathematical operations
+- Minimize GPU state changes and memory transfers
+
+## Mathematical Performance Optimization
+- Use SIMD instructions for vector and matrix operations where possible
+- Implement loop unrolling for tight mathematical computation loops
+- Cache expensive trigonometric and transcendental function results
+- Use efficient approximations for complex mathematical functions
+- Optimize memory access patterns for cache locality
+
+```c
+// Optimized fractal computation pattern
+#include <immintrin.h>  // For SIMD operations
+
+// SIMD-optimized complex multiplication for 4 points at once
+void complex_multiply_simd(const float* a_real, const float* a_imag,
+                          const float* b_real, const float* b_imag,
+                          float* result_real, float* result_imag) {
+    printf("\x1b[36m[%s]\x1b[0m SIMD complex multiplication\n", __FILE__);
+    
+    // Load 4 complex numbers at once
+    __m128 ar = _mm_load_ps(a_real);
+    __m128 ai = _mm_load_ps(a_imag);
+    __m128 br = _mm_load_ps(b_real);
+    __m128 bi = _mm_load_ps(b_imag);
+    
+    // Compute (ar * br - ai * bi) + i(ar * bi + ai * br)
+    __m128 real_part = _mm_sub_ps(_mm_mul_ps(ar, br), _mm_mul_ps(ai, bi));
+    __m128 imag_part = _mm_add_ps(_mm_mul_ps(ar, bi), _mm_mul_ps(ai, br));
+    
+    _mm_store_ps(result_real, real_part);
+    _mm_store_ps(result_imag, imag_part);
+}
+
+// Cache-friendly matrix operations
+void matrix_multiply_blocked(const float* a, const float* b, float* c, int n, int block_size) {
+    printf("\x1b[36m[%s]\x1b[0m Blocked matrix multiplication for cache efficiency\n", __FILE__);
+    
+    for (int ii = 0; ii < n; ii += block_size) {
+        for (int jj = 0; jj < n; jj += block_size) {
+            for (int kk = 0; kk < n; kk += block_size) {
+                // Process block
+                int i_end = (ii + block_size < n) ? ii + block_size : n;
+                int j_end = (jj + block_size < n) ? jj + block_size : n;
+                int k_end = (kk + block_size < n) ? kk + block_size : n;
+                
+                for (int i = ii; i < i_end; i++) {
+                    for (int j = jj; j < j_end; j++) {
+                        float sum = 0.0f;
+                        for (int k = kk; k < k_end; k++) {
+                            sum += a[i * n + k] * b[k * n + j];
+                        }
+                        c[i * n + j] += sum;
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+## GPU and OpenGL Performance
+- Minimize OpenGL state changes and draw calls
+- Use vertex buffer objects (VBOs) and vertex array objects (VAOs)
+- Batch similar rendering operations together
+- Implement level-of-detail (LOD) systems for complex geometry
+- Use texture atlases to reduce texture binding overhead
+
+```c
+// Efficient OpenGL rendering pattern
+typedef struct render_batch {
+    GLuint vao;
+    GLuint vbo;
+    GLuint shader_program;
+    size_t vertex_count;
+    GLenum primitive_type;
+} render_batch_t;
+
+// Batch similar rendering operations
+int render_fractal_points(render_batch_t* batches, size_t batch_count) {
+    printf("\x1b[36m[%s]\x1b[0m Rendering %zu batches\n", __FILE__, batch_count);
+    
+    GLuint current_program = 0;
+    GLuint current_vao = 0;
+    
+    for (size_t i = 0; i < batch_count; i++) {
+        // Minimize state changes
+        if (batches[i].shader_program != current_program) {
+            glUseProgram(batches[i].shader_program);
+            current_program = batches[i].shader_program;
+        }
+        
+        if (batches[i].vao != current_vao) {
+            glBindVertexArray(batches[i].vao);
+            current_vao = batches[i].vao;
+        }
+        
+        glDrawArrays(batches[i].primitive_type, 0, batches[i].vertex_count);
+    }
+    
+    printf("\x1b[32m[%s]\x1b[0m Rendering completed\n", __FILE__);
+    return 0;
+}
+
+// Efficient vertex data upload
+int upload_vertex_data_streamed(GLuint vbo, const float* data, size_t size) {
+    printf("\x1b[36m[%s]\x1b[0m Uploading %zu bytes of vertex data\n", __FILE__, size);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    
+    // Orphan the buffer for better performance
+    glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_DYNAMIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
+    
+    return 0;
+}
+```
+
+## Caching Strategies
+- Implement browser caching with proper cache headers
+- Use Redis or in-memory caching for frequently accessed data
+- Apply query result caching for expensive database operations
+- Implement cache invalidation strategies
+
+```javascript
+// Redis caching implementation
+const CacheService = {
+  async get(key) {
+    console.log('\x1b[36m[cache-service.js]\x1b[0m Getting cache key:', key);
+    try {
+      const result = await redis.get(key);
+      return result ? JSON.parse(result) : null;
+    } catch (error) {
+      console.error('\x1b[31m[cache-service.js]\x1b[0m Cache get error:', error);
+      return null;
+    }
+  },
+
+  async set(key, data, ttl = 3600) {
+    console.log('\x1b[32m[cache-service.js]\x1b[0m Setting cache key:', key, 'TTL:', ttl);
+    try {
+      await redis.setex(key, ttl, JSON.stringify(data));
+    } catch (error) {
+      console.error('\x1b[31m[cache-service.js]\x1b[0m Cache set error:', error);
+    }
+  }
+};
+```
+
+## Memory Management
+- Monitor memory usage and implement proper cleanup
+- Use weak references for large object collections
+- Implement proper event listener cleanup
+- Avoid memory leaks in closures and timers
+
+## Network Optimization
+- Use HTTP/2 for improved multiplexing
+- Implement request deduplication for identical API calls
+- Use proper compression (gzip, brotli)
+- Batch API requests where possible
+
+```javascript
+// Request deduplication service
+class RequestDeduplicator {
+  constructor() {
+    this.pendingRequests = new Map();
+    console.log('\x1b[36m[request-deduplicator.js]\x1b[0m Initialized request deduplicator');
+  }
+
+  async request(url, options = {}) {
+    const key = `${options.method || 'GET'}:${url}:${JSON.stringify(options.body || {})}`;
+    
+    if (this.pendingRequests.has(key)) {
+      console.log('\x1b[33m[request-deduplicator.js]\x1b[0m Deduplicating request:', key);
+      return this.pendingRequests.get(key);
+    }
+
+    const promise = fetch(url, options)
+      .then(response => response.json())
+      .finally(() => {
+        this.pendingRequests.delete(key);
+      });
+
+    this.pendingRequests.set(key, promise);
+    return promise;
+  }
+}
+```
+
+## Database Optimization
+- Use proper indexing on frequently queried columns
+- Implement query optimization and execution plan analysis
+- Use database connection pooling
+- Apply proper normalization/denormalization strategies
+
+## Asset Optimization
+- Compress and optimize images (WebP, lazy loading)
+- Minify CSS and JavaScript files
+- Use CDN for static asset delivery
+- Implement proper cache headers for static assets
+
+## Monitoring and Metrics
+- Implement performance monitoring (response times, error rates)
+- Track key performance indicators (KPIs)
+- Use proper logging for performance debugging
+- Set up alerts for performance degradation
+
+```javascript
+// Performance monitoring middleware
+const performanceMonitor = (req, res, next) => {
+  const start = process.hrtime();
+  
+  res.on('finish', () => {
+    const [seconds, nanoseconds] = process.hrtime(start);
+    const duration = (seconds * 1000) + (nanoseconds / 1e6);
+    
+    const color = duration > 1000 ? '\x1b[31m' : duration > 500 ? '\x1b[33m' : '\x1b[32m';
+    console.log(`${color}[performance-monitor.js]\x1b[0m ${req.method} ${req.path} - ${duration.toFixed(2)}ms`);
+    
+    if (duration > 1000) {
+      console.warn('\x1b[33m[performance-monitor.js]\x1b[0m Slow request detected:', req.path);
+    }
+  });
+  
+  next();
+};
+```
